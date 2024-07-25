@@ -2,17 +2,12 @@ from fastapi import FastAPI
 from datetime import datetime, timedelta, timezone
 from fastapi.exceptions import HTTPException
 import logging
-from db.commits import DBInterface
+from app.commits import DBInterface
 from app.CommitFetcher import CommitFetcher
 from app.models import RepoModel
 
 
-
-
-
 app = FastAPI()
-
-
 
 
 @app.get('/api/repos/top100')
@@ -21,7 +16,6 @@ async def getTop100():
 
 @app.get('/api/repos/{owner}/{repo}/activity')
 async def getRepoActivity(owner: str, repo: str, since: str, until: str):
-    print('in getRepoActivity')
     if not since or not until:
         return HTTPException(403, detail="Please provide both 'since' and 'until' parameters")
     

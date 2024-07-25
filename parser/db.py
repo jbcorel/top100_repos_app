@@ -68,7 +68,7 @@ class mainDB:
                     SELECT repo, position, ROW_NUMBER() OVER (PARTITION BY repo ORDER BY fetch_date DESC) as rn
                     FROM repository_history
                 ) as subquery
-                WHERE rn=2;
+                WHERE rn=1;
             """)
             previous_positions = cursor.fetchall()
             return {row[0]: row[1] for row in previous_positions}
