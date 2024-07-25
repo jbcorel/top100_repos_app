@@ -14,17 +14,17 @@ class mainDB:
     
     def __init__(self) -> None:
         logging.basicConfig(level=logging.INFO)
+        self.conn = psycopg.connect(self.CONN_DETAILS)
         
-        with psycopg.connect(self.CONN_DETAILS) as conn:
-            with conn.cursor() as cursor:
-                try:
-                    self.create_repositories(cursor)
-                    self.create_repository_history(cursor)
+        with self.conn.cursor() as cursor:
+            try:
+                self.create_repositories(cursor)
+                self.create_repository_history(cursor)
 
-                    conn.commit()
-                except Exception as e:
-                    conn.rollback()
-                    raise RuntimeError(e)
+                self.conn.commit()
+            except Exception as e:
+                self.conn.rollback()
+                raise RuntimeError(e)
 
     
     def create_repositories(self, cursor):
@@ -79,61 +79,64 @@ class mainDB:
     
     def upsert_repositories(self, repositories: List[dict]) -> None:
         """Upserts main table and history tables with new values. For history table, stores fetch_date in UTC"""
-        with psycopg.connect(self.CONN_DETAILS) as conn:
-            with conn.cursor() as cursor:
-                try:
-                    previous_positions = self.get_previous_positions(cursor)
+
+        with self.conn.cursor() as cursor:
+            try:
+                previous_positions = self.get_previous_positions(cursor)
+            
+                date_fetched = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z%z") #store in UTC time
                 
-                    date_fetched = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z%z") #store in UTC time
+                for repo in repositories:
+                    previous_position = previous_positions.get(repo['repo'], None) 
+                    try:
+                        cursor.execute("""
+                            INSERT INTO repositories (repo, owner, position_cur, position_prev, stars, watchers, forks, open_issues, language, date_created)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (repo)
+                            DO UPDATE SET owner = EXCLUDED.owner,
+                                        position_cur = EXCLUDED.position_cur,
+                                        position_prev = EXCLUDED.position_prev,
+                                        stars = EXCLUDED.stars,
+                                        watchers = EXCLUDED.watchers,
+                                        forks = EXCLUDED.forks,
+                                        open_issues = EXCLUDED.open_issues,
+                                        language = EXCLUDED.language,
+                                        date_created = EXCLUDED.date_created;
+                        """, (
+                            repo['repo'],
+                            repo['owner'],
+                            repo['position_cur'],
+                            previous_position,
+                            repo['stars'],
+                            repo['watchers'],
+                            repo['forks'],
+                            repo['open_issues'],
+                            repo['language'],
+                            repo['date_created']
+                        ))
+                    except Exception as e:
+                        raise RuntimeError(f"Unable to insert into repositories. Error: {e}")
                     
-                    for repo in repositories:
-                        previous_position = previous_positions.get(repo['repo'], None) 
-                        try:
-                            cursor.execute("""
-                                INSERT INTO repositories (repo, owner, position_cur, position_prev, stars, watchers, forks, open_issues, language, date_created)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                ON CONFLICT (repo)
-                                DO UPDATE SET owner = EXCLUDED.owner,
-                                            position_cur = EXCLUDED.position_cur,
-                                            position_prev = EXCLUDED.position_prev,
-                                            stars = EXCLUDED.stars,
-                                            watchers = EXCLUDED.watchers,
-                                            forks = EXCLUDED.forks,
-                                            open_issues = EXCLUDED.open_issues,
-                                            language = EXCLUDED.language,
-                                            date_created = EXCLUDED.date_created;
-                            """, (
-                                repo['repo'],
-                                repo['owner'],
-                                repo['position_cur'],
-                                previous_position,
-                                repo['stars'],
-                                repo['watchers'],
-                                repo['forks'],
-                                repo['open_issues'],
-                                repo['language'],
-                                repo['date_created']
-                            ))
-                        except Exception as e:
-                            raise RuntimeError(f"Unable to insert into repositories. Error: {e}")
-                        
-                        try:
-                            cursor.execute("""
-                                INSERT INTO repository_history (repo, fetch_date, position)
-                                VALUES (%s, %s, %s)
-                                ON CONFLICT (repo, fetch_date)
-                                DO NOTHING;
-                            """, (
-                                repo['repo'], 
-                                date_fetched, 
-                                repo['position_cur']
-                            ))
-                        except Exception as e:
-                            raise RuntimeError(f"Unable to insert into repository_history. Error: {e}")
-                        
-                    conn.commit()
-                except Exception as e:
-                    conn.rollback()
-                    logging.info(e)
+                    try:
+                        cursor.execute("""
+                            INSERT INTO repository_history (repo, fetch_date, position)
+                            VALUES (%s, %s, %s)
+                            ON CONFLICT (repo, fetch_date)
+                            DO NOTHING;
+                        """, (
+                            repo['repo'], 
+                            date_fetched, 
+                            repo['position_cur']
+                        ))
+                    except Exception as e:
+                        raise RuntimeError(f"Unable to insert into repository_history. Error: {e}")
+                    
+                self.conn.commit()
+            except Exception as e:
+                self.conn.rollback()
+                logging.info(e)
+                
+    def close(self):
+        self.conn.close()
             
     

@@ -1,15 +1,23 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 import app.models as models
-from typing import List
+from typing import List, Annotated
 from datetime import datetime, timedelta, timezone
 from fastapi.exceptions import HTTPException
-import logging
 from app.db import DBInterface
 from app.CommitFetcher import CommitFetcher
 
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="client/static"), name="static")
+
+@app.get('/')
+async def root():
+    with open("client/templates/index.html") as f:
+        return HTMLResponse(content=f.read(), status_code=200)
+    
 
 @app.get('/api/repos/top100', response_model=List[models.Repository])
 async def getTop100():
@@ -26,7 +34,11 @@ async def getTop100():
             db.close()
 
 @app.get('/api/repos/{owner}/{repo}/activity', response_model = List[models.RepoActivity])
-async def getRepoActivity(owner: str, repo: str, since: str, until: str):
+async def getRepoActivity(owner: str, 
+                          repo: str, 
+                          since: Annotated[str, Query(pattern='^\d{4}-\d{2}-\d{2}$')] = ..., 
+                          until: Annotated[str, Query(pattern='^\d{4}-\d{2}-\d{2}$')] = ...):
+    
     if not since or not until:
         return HTTPException(403, detail="Please provide both 'since' and 'until' parameters")
     

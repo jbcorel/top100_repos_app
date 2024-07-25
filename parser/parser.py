@@ -21,10 +21,8 @@ class Top100Getter:
                     'Authorization': f"Bearer {TOKEN}"
                 }
     
-    def __init__(self, db_object) -> None:
-        
+    def __init__(self) -> None:
         logging.basicConfig(level=logging.INFO)
-        self.db = db_object
         
     def getTop100Repos(self) -> dict:
         """Gets a list of top100 repos. Due to the way github search api yields info, once this is done,
@@ -109,11 +107,12 @@ class Top100Getter:
             
         return top100Arr 
     
+
 if __name__ == "__main__":
-    print(os.getenv('TOKEN'))
     db = mainDB()
     parser = Top100Getter(mainDB)
     top100Arr = parser.parser()
     db.upsert_repositories(top100Arr)
+    db.close()
     
     
