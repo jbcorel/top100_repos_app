@@ -2,13 +2,13 @@ from time import sleep
 import requests
 from requests.exceptions import HTTPError
 import logging
-from datetime import datetime
-from db.db import mainDB
+from dateutil.parser import isoparse
+from parser.db import mainDB
 from sys import exit
 from dotenv import load_dotenv
 import os
 
-load_dotenv('.env')
+load_dotenv()
 
 
 
@@ -59,7 +59,6 @@ class Top100Getter:
             sleep(t)
             try:
                 rsp = requests.get(f'{self.BASE_URL}/repos/{owner}/{repo}', headers=self.HEADERS)
-                print(rsp.headers)
                 rsp.raise_for_status()
                 break
             except HTTPError as e:
@@ -68,9 +67,7 @@ class Top100Getter:
             except Exception as e:
                 logging.info(f'an error occurred while fetching details for repo {owner}/{repo}: {e}. Retrying...')
                 t = t + 1
-        
         rsp = rsp.json()
-        
         repo = rsp['full_name']
         owner = rsp['owner']['login']
         stars = rsp['stargazers_count']
@@ -78,6 +75,7 @@ class Top100Getter:
         forks = rsp['forks_count']
         open_issues = rsp['open_issues']
         language = rsp['language']
+        date_created = isoparse(rsp['created_at']).strftime('%Y-%m-%d')
         
         return {
             'repo': repo,
@@ -86,7 +84,8 @@ class Top100Getter:
             'watchers': watchers,
             'forks': forks,
             'open_issues': open_issues,
-            'language': language
+            'language': language,
+            'date_created': date_created
         }
         
     def parser(self, delay=1) -> list:
@@ -111,6 +110,7 @@ class Top100Getter:
         return top100Arr 
     
 if __name__ == "__main__":
+    print(os.getenv('TOKEN'))
     db = mainDB()
     parser = Top100Getter(mainDB)
     top100Arr = parser.parser()

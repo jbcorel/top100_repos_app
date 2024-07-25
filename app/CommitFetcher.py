@@ -1,18 +1,18 @@
 import psycopg
 import requests 
 import datetime
-import pytz
-from datetime import datetime 
+from datetime import datetime, date, timezone
 from time import sleep 
 import logging
 from collections import defaultdict
 from dotenv import load_dotenv
 import os
 
-load_dotenv('.env')
+load_dotenv()
 
 class CommitFetcher:
-
+    """API interface to fetch commits from GitHub. Aggregates commits for a given range of date, which is then used to pass to commit DB interface"""
+    
     TOKEN = os.getenv('TOKEN')
     BASE_URL = 'https://api.github.com'
     HEADERS = {'X-GitHub-Api-Version': '2022-11-28',
@@ -22,6 +22,7 @@ class CommitFetcher:
                     }
     
     def fetch_commits(self, owner, repo, since, until) -> list[dict]:
+        
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/commits"
         params = {"since": since, "until": until, "per_page": 100}
         commits = []
@@ -42,17 +43,23 @@ class CommitFetcher:
                         break
             else:
                 url = None
-                
-        for comm in commits: #RMOVE
-            print(comm)
-            
-        return commits
+        
+        logging.info('fetched..')
+        logging.info(commits )
+        return commits if commits else until
 
-    def aggregate_commits(self, commits):
-        aggregated_data = defaultdict(lambda: {'commits': 0, 'authors': set()})
-
+    def aggregate_commits(self, commits: list) -> list[dict]:
+        """Parses a dictionary with detailed info on commits within a specific range,
+        then returns an array with date, commits, [authors] as keys."""
+        aggregated_data = defaultdict(lambda: {'commits': 0, 'authors': set()}) 
+        
+        if isinstance(commits, date):
+            no_commit_date = datetime.combine(commits, datetime.min.time()).replace(tzinfo=timezone.utc)
+            no_commit_date = str(no_commit_date)
+            return [{'date': no_commit_date, 'commits': 0, 'authors': []}]
+        
         for commit in commits:
-            commit_date = commit['commit']['author']['date'][:10]  # Extract date part only
+            commit_date = commit['commit']['author']['date']
             author = commit['commit']['author']['name']
             aggregated_data[commit_date]['commits'] += 1
             aggregated_data[commit_date]['authors'].add(author)
@@ -60,9 +67,14 @@ class CommitFetcher:
         return [
             {"date": date, "commits": data['commits'], "authors": list(data['authors'])}
             for date, data in aggregated_data.items()
-        ]
-
-a = CommitFetcher()
-commits = a.fetch_commits('freecodecamp', 'freecodecamp', '2024-06-23', '2024-07-24' )
-n = a.aggregate_commits(commits)
-print (n)
+        ] 
+        
+    def get_commits(self, owner, repo, since, until):
+        logging.info(f'Getting commits for {repo} since {since} until {until}...')
+        
+        commits = self.fetch_commits(owner, repo, since, until)
+        agg_commits = self.aggregate_commits(commits)
+        return agg_commits
+    
+print(requests.get('https://api.github.com/repos/freeCodeCamp/freeCodeCamp/commits?since=2020-12-31&until=2021-01-02', headers={'X-GitHub-Api-Version': '2022-11-28',
+                        'accept': 'application/vnd.github+json',}).json() )
