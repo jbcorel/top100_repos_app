@@ -69,15 +69,12 @@ async def getRepoActivity(owner: str,
     
     commit_fetcher = CommitFetcher()
 
-    # Check for existing aggregated data in the database
     existing_dates = db.get_existing_commits(owner, repo, since_date, until_date)
 
-    # Determine missing dates through set operations
     existing_dates = set(existing_dates)
     all_dates = {since_date + timedelta(days=x) for x in range((until_date - since_date).days + 1)}
     missing_dates = all_dates.difference(existing_dates)
 
-    # Fetch and store missing commits if there any of the dates are not in the db
     if missing_dates:
         if all_dates == missing_dates:
             try:

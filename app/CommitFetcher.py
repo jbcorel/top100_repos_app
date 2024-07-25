@@ -5,10 +5,7 @@ from datetime import datetime, date, timezone
 from time import sleep 
 import logging
 from collections import defaultdict
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
 
 class CommitFetcher:
     """API interface to fetch commits from GitHub. Aggregates commits for a given range of date, which is then used to pass to commit DB interface"""

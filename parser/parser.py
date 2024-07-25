@@ -5,11 +5,7 @@ import logging
 from dateutil.parser import isoparse
 from parser.db import mainDB
 from sys import exit
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
-
 
 
 class Top100Getter:
@@ -108,11 +104,11 @@ class Top100Getter:
         return top100Arr 
     
 
-if __name__ == "__main__":
-    db = mainDB()
-    parser = Top100Getter(mainDB)
-    top100Arr = parser.parser()
-    db.upsert_repositories(top100Arr)
-    db.close()
+# if __name__ == "__main__":
+#     db = mainDB()
+#     parser = Top100Getter(mainDB)
+#     top100Arr = parser.parser()
+#     db.upsert_repositories(top100Arr)
+#     db.close()
     
     

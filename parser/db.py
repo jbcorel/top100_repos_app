@@ -1,12 +1,8 @@
 import psycopg
 from datetime import datetime, timezone
 import logging
-from dotenv import load_dotenv
 import os
 from typing import List
-
-load_dotenv()
-
 
 class mainDB:
     """Interface for the parser to interact with the database. CONN_DETAILS represents psql connection settings in the format of "dbname= host= user= password=" """
