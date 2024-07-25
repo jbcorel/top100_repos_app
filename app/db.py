@@ -14,12 +14,13 @@ class DBInterface:
     CONN_DETAILS = os.getenv('CONN_DETAILS')
     
     def __init__(self) -> None:
+
         logging.basicConfig(level=logging.INFO)
 
         try:
             self.conn = psycopg.connect(self.CONN_DETAILS)
         except Exception as e:
-            logging.error('Error occurred when connecting to a DB: {e}')
+            logging.error(f'Error occurred when connecting to a DB: {e}')
             raise RuntimeError(f'Error occurred when connecting to a DB: {e}')
         
         with self.conn.cursor() as cursor:
