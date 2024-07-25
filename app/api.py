@@ -23,7 +23,7 @@ async def getRepoActivity(owner: str, repo: str, since: str, until: str):
         since_date = datetime.strptime(since, '%Y-%m-%d').date()
         until_date = datetime.strptime(until, '%Y-%m-%d').date()
     except ValueError:
-        return HTTPException(status_code=403, detail='Invalid format of since and until date(s). Should be in the format of yyyy-mm-dd')
+        return HTTPException(status_code=403, detail='Invalid format of since and/or until date(s). Should be in the format of yyyy-mm-dd')
     
     if since_date > until_date:
         return HTTPException(status_code=403, detail='Since cannot be bigger than until')
@@ -53,21 +53,24 @@ async def getRepoActivity(owner: str, repo: str, since: str, until: str):
     existing_dates = set(existing_dates)
     all_dates = {since_date + timedelta(days=x) for x in range((until_date - since_date).days + 1)}
     missing_dates = all_dates.difference(existing_dates)
-    
-    logging.info(all_dates)
-    logging.info(missing_dates)
-    logging.info(existing_dates)
-    logging.info(all_dates == missing_dates)
 
     # Fetch and store missing commits if there any of the dates are not in the db
     if missing_dates:
         if all_dates == missing_dates:
-            aggregated_commits = commit_fetcher.get_commits(owner, repo, since_date-timedelta(days=1), until_date)
+            try:
+                aggregated_commits = commit_fetcher.get_commits(owner, repo, since_date-timedelta(days=1), until_date)
+            except Exception as e:
+                commit_db.close()
+                return HTTPException(status_code=500, detail="An unknown error occurred on the server. Possibly, Github API is not responding. Try again later")
             commit_db.store_aggregated_commits(owner, repo, aggregated_commits)
         else:
             for date in missing_dates:
                 prev_date = date - timedelta(days=1)
-                aggregated_commits = commit_fetcher.get_commits(owner, repo, prev_date, date)
+                try:
+                    aggregated_commits = commit_fetcher.get_commits(owner, repo, prev_date, date)
+                except Exception as e:
+                    commit_db.close()
+                    return HTTPException(status_code=500, detail="An unknown error occurred on the server. Possibly, Github API is not responding. Try again later")
                 commit_db.store_aggregated_commits(owner, repo, aggregated_commits)
 
     # Fetch the aggregated commit activity from the database

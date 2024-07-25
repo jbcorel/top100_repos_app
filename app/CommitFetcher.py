@@ -43,9 +43,7 @@ class CommitFetcher:
                         break
             else:
                 url = None
-        
-        logging.info('fetched..')
-        logging.info(commits )
+                
         return commits if commits else until
 
     def aggregate_commits(self, commits: list) -> list[dict]:
