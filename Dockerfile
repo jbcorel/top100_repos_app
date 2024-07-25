@@ -18,7 +18,6 @@ ENV PYTHONUNBUFFERED=1
 
 #TODO: change to build args later
 ENV CONN_DETAILS='host=rc1b-xx946i4v217yyiv4.mdb.yandexcloud.net,rc1d-5dkpuccnhyughi8n.mdb.yandexcloud.net port=6432 sslmode=verify-full dbname=test_wb user=jbcorel password=12345678 target_session_attrs=read-write'
-ENV TOKEN=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
 
 WORKDIR /app
 

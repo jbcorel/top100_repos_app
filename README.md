@@ -42,4 +42,5 @@
 
 1. git clone <this repo>
 2. docker compose up --build
+3. localhost:8000
 

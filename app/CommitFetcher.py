@@ -10,7 +10,7 @@ import os
 class CommitFetcher:
     """API interface to fetch commits from GitHub. Aggregates commits for a given range of date, which is then used to pass to commit DB interface"""
     
-    TOKEN = os.getenv('TOKEN')
+    TOKEN = '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'
     BASE_URL = 'https://api.github.com'
     HEADERS = {'X-GitHub-Api-Version': '2022-11-28',
                         'accept': 'application/vnd.github+json',
@@ -48,7 +48,8 @@ class CommitFetcher:
         then returns an array with date, commits, [authors] as keys."""
         aggregated_data = defaultdict(lambda: {'commits': 0, 'authors': set()}) 
         
-        if isinstance(commits, date):
+        if isinstance(commits, str):
+            commits = datetime.strptime(commits, '%Y-%m-%d')
             no_commit_date = datetime.combine(commits, datetime.min.time()).replace(tzinfo=timezone.utc)
             no_commit_date = str(no_commit_date)
             return [{'date': no_commit_date, 'commits': 0, 'authors': []}]

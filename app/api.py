@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.exceptions import HTTPException
 from app.db import DBInterface
 from app.CommitFetcher import CommitFetcher
+import logging 
 
 
 app = FastAPI()
@@ -81,7 +82,7 @@ async def getRepoActivity(owner: str,
                 aggregated_commits = commit_fetcher.get_commits(owner, repo, since_date-timedelta(days=1), until_date)
             except Exception as e:
                 db.close()
-                return HTTPException(status_code=500, detail="An unknown error occurred on the server. Possibly, Github API is not responding. Try again later")
+                return HTTPException(status_code=500, detail=f"An unknown error occurred on the server. Possibly, Github API is not responding, token might be expired. Try again later. ")
             db.store_aggregated_commits(owner, repo, aggregated_commits)
         else:
             for date in missing_dates:
@@ -90,7 +91,8 @@ async def getRepoActivity(owner: str,
                     aggregated_commits = commit_fetcher.get_commits(owner, repo, prev_date, date)
                 except Exception as e:
                     db.close()
-                    return HTTPException(status_code=500, detail="An unknown error occurred on the server. Possibly, Github API is not responding. Try again later")
+                    logging.error(e)
+                    return HTTPException(status_code=500, detail=f"An unknown error occurred on the server. Github API is not responding, token might be expired. Try again later ")
                 db.store_aggregated_commits(owner, repo, aggregated_commits)
 
     # Fetch the aggregated commit activity from the database

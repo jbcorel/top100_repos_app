@@ -3,11 +3,7 @@ from dateutil.parser import isoparse
 import logging
 from datetime import date
 from typing import List, Tuple, Optional
-from dotenv import load_dotenv
 import os
-
-
-load_dotenv()
 
 class DBInterface:
     """Interface for commits API endpoint to communicate with the DB."""
