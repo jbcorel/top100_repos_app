@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import logging
 from dotenv import load_dotenv
 import os
+from typing import List
 
 load_dotenv()
 
@@ -76,7 +77,7 @@ class mainDB:
             raise RuntimeError('Unable to get previous positions. Error: %s', e)
 
     
-    def upsert_repositories(self, repositories: list[dict]) -> None:
+    def upsert_repositories(self, repositories: List[dict]) -> None:
         """Upserts main table and history tables with new values. For history table, stores fetch_date in UTC"""
         with psycopg.connect(self.CONN_DETAILS) as conn:
             with conn.cursor() as cursor:

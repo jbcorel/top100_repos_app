@@ -1,6 +1,8 @@
 import psycopg
 from dateutil.parser import isoparse
 import logging
+from datetime import date
+from typing import List, Tuple, Optional
 from dotenv import load_dotenv
 import os
 
@@ -12,9 +14,14 @@ class DBInterface:
     CONN_DETAILS = os.getenv('CONN_DETAILS')
     
     def __init__(self) -> None:
-        self.conn = psycopg.connect(self.CONN_DETAILS)
-        
         logging.basicConfig(level=logging.INFO)
+
+        try:
+            self.conn = psycopg.connect(self.CONN_DETAILS)
+        except Exception as e:
+            logging.error('Error occurred when connecting to a DB: {e}')
+            raise RuntimeError(f'Error occurred when connecting to a DB: {e}')
+        
         with self.conn.cursor() as cursor:
             try:
                 self.create_table(cursor)
@@ -35,7 +42,7 @@ class DBInterface:
             );
         """)
     
-    def get_existing_commits(self, owner, repo, since, until):
+    def get_existing_commits(self, owner, repo, since, until) -> list:
         repo_full_name = f"{owner}/{repo}"
         with self.conn.cursor() as cursor:
             cursor.execute("""
@@ -47,7 +54,7 @@ class DBInterface:
             existing_commits = [row[0] for row in cursor.fetchall()]
         return existing_commits
     
-    def store_aggregated_commits(self, owner, repo, aggregated_commits) -> None:
+    def store_aggregated_commits(self, owner, repo, aggregated_commits):
         """Store fetched commits"""
         repo_full_name = f"{owner}/{repo}"
         with self.conn.cursor() as cursor:
@@ -63,7 +70,7 @@ class DBInterface:
 
             self.conn.commit()
     
-    def get_aggregated_commit_activity(self, owner, repo, since, until) -> list:
+    def get_aggregated_commit_activity(self, owner, repo, since, until) -> List[Tuple[date, int, List[str]]]:
         repo_full_name = f"{owner}/{repo}"
         
         with self.conn.cursor() as cursor:
@@ -75,7 +82,7 @@ class DBInterface:
             """, (repo_full_name, since, until))
             return cursor.fetchall()
         
-    def get_repo_creation(self, owner, repo):
+    def get_repo_creation(self, owner, repo) -> date:
         repo_full_name = f'{owner}/{repo}'
         
         with self.conn.cursor() as cursor:
@@ -87,6 +94,15 @@ class DBInterface:
                         
             result = cursor.fetchone()
             return result[0] if result else None
+    
+    def get_top100(self) -> List[Tuple[str, int, int, Optional[int], int, int, int, int, Optional[str]]]:
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT repo, owner, position_cur, position_prev, stars, watchers, forks, open_issues, language
+                FROM repositories
+                ORDER BY position_cur;
+            """)
+            return cursor.fetchall()
     
     def close(self):
         self.conn.close()
