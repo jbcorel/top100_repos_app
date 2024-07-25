@@ -75,6 +75,3 @@ class CommitFetcher:
         commits = self.fetch_commits(owner, repo, since, until)
         agg_commits = self.aggregate_commits(commits)
         return agg_commits
-    
-print(requests.get('https://api.github.com/repos/freeCodeCamp/freeCodeCamp/commits?since=2020-12-31&until=2021-01-02', headers={'X-GitHub-Api-Version': '2022-11-28',
-                        'accept': 'application/vnd.github+json',}).json() )
