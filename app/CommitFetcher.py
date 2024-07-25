@@ -10,11 +10,10 @@ import os
 class CommitFetcher:
     """API interface to fetch commits from GitHub. Aggregates commits for a given range of date, which is then used to pass to commit DB interface"""
     
-    TOKEN = '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'
+    TOKEN = '' ##СЮДА ТОКЕН
     BASE_URL = 'https://api.github.com'
     HEADERS = {'X-GitHub-Api-Version': '2022-11-28',
                         'accept': 'application/vnd.github+json',
-                        'User-Agent': 'jbcorel',
                         'Authorization': f"Bearer {TOKEN}"
                     }
     
@@ -71,3 +70,4 @@ class CommitFetcher:
         commits = self.fetch_commits(owner, repo, since, until)
         agg_commits = self.aggregate_commits(commits)
         return agg_commits
+    

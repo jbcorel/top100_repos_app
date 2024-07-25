@@ -41,6 +41,7 @@
  Запуск:
 
 1. git clone <this repo>
-2. docker compose up --build
-3. localhost:8000
+2. Нужно сгенерировать и вставить свой github personal access token в аттрибут TOKEN класса CommitFetcher в CommitFetcher.py. Сделать это можно в настройках профиля - developer settings (в самом низу в панели слева) - Personal access tokens - classic. Никаких разрешений ставить не нужно, просто создать с дефолтными настройками.
+3. docker compose up --build
+4. localhost:8000
 
