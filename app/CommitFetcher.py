@@ -41,7 +41,7 @@ class CommitFetcher:
             else:
                 url = None
                 
-        return commits if commits else until
+        return commits if commits else str(until)
 
     def aggregate_commits(self, commits: list) -> list[dict]:
         """Parses a dictionary with detailed info on commits within a specific range,

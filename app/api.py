@@ -82,7 +82,7 @@ async def getRepoActivity(owner: str,
                 aggregated_commits = commit_fetcher.get_commits(owner, repo, since_date-timedelta(days=1), until_date)
             except Exception as e:
                 db.close()
-                return HTTPException(status_code=500, detail=f"An unknown error occurred on the server. Possibly, Github API is not responding, token might be expired. Try again later. ")
+                return HTTPException(status_code=500, detail=f"An unknown error occurred on the server. Possibly, Github API is not responding, token might be expired. Try again later. {e} ")
             db.store_aggregated_commits(owner, repo, aggregated_commits)
         else:
             for date in missing_dates:
@@ -92,7 +92,7 @@ async def getRepoActivity(owner: str,
                 except Exception as e:
                     db.close()
                     logging.error(e)
-                    return HTTPException(status_code=500, detail=f"An unknown error occurred on the server. Github API is not responding, token might be expired. Try again later ")
+                    return HTTPException(status_code=500, detail=f"An unknown error occurred on the server. Github API is not responding, token might be expired. Try again later {e}")
                 db.store_aggregated_commits(owner, repo, aggregated_commits)
 
     # Fetch the aggregated commit activity from the database
