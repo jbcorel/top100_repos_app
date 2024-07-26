@@ -1,7 +1,7 @@
 import psycopg
 import requests 
 import datetime
-from datetime import datetime, date, timezone
+from datetime import datetime, timezone, timedelta
 from time import sleep 
 import logging
 from collections import defaultdict
@@ -40,18 +40,19 @@ class CommitFetcher:
             else:
                 url = None
                 
-        return commits if commits else str(until)
+        return commits if commits else (since,until)
 
     def aggregate_commits(self, commits: list) -> list[dict]:
         """Parses a dictionary with detailed info on commits within a specific range,
         then returns an array with date, commits, [authors] as keys."""
         aggregated_data = defaultdict(lambda: {'commits': 0, 'authors': set()}) 
-        
-        if isinstance(commits, str):
-            commits = datetime.strptime(commits, '%Y-%m-%d')
-            no_commit_date = datetime.combine(commits, datetime.min.time()).replace(tzinfo=timezone.utc)
-            no_commit_date = str(no_commit_date)
-            return [{'date': no_commit_date, 'commits': 0, 'authors': []}]
+        if isinstance(commits, tuple):
+            since, until = commits
+            dates_between = self.list_dates_between(since, until)
+            return [
+                {"date": date, "commits": 0, "authors": []}
+                for date in dates_between
+                ]
         
         for commit in commits:
             commit_date = commit['commit']['author']['date']
@@ -71,3 +72,14 @@ class CommitFetcher:
         agg_commits = self.aggregate_commits(commits)
         return agg_commits
     
+    
+    def list_dates_between(self, start_date: str, end_date: str) -> list:
+        start_date = datetime.combine(start_date, datetime.min.time()).replace(tzinfo=timezone.utc)
+        end_date = datetime.combine(end_date, datetime.min.time()).replace(tzinfo=timezone.utc)    
+        date_list = []
+        current_date = start_date
+        while current_date <= end_date:
+            date_list.append(str(current_date))
+            current_date += timedelta(days=1)
+        return date_list
+

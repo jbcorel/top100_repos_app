@@ -33,7 +33,7 @@ function fetchRepositories() {
                 repoList.appendChild(repoItem);
             });
         })
-        .catch(error => alert(error));
+        .catch(error => alert('An error occurred', error.status));
 }
 
 function fetchCommitActivity(full_repo_name) {
@@ -51,7 +51,7 @@ function fetchCommitActivity(full_repo_name) {
         .then(response => {
             if (!response.ok) {
                 console.log(response)
-                throw new Error(`HTTP error! Status: ${response.status}.`);
+                throw new Error(`HTTP error! Status: ${response.status}. Text: ${response.body}`);
             }
             return response.json();
         })

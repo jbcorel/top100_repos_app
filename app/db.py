@@ -26,7 +26,7 @@ class DBInterface:
             except Exception as e:
                 self.conn.rollback()
                 raise RuntimeError(f"Error initializing agg_commits: {e}")
-    
+        
     def create_table(self, cursor):
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agg_commits (
