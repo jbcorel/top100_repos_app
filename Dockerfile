@@ -17,7 +17,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 #TODO: change to build args later
-ENV CONN_DETAILS='host=rc1b-xx946i4v217yyiv4.mdb.yandexcloud.net,rc1d-5dkpuccnhyughi8n.mdb.yandexcloud.net port=6432 sslmode=verify-full dbname=test_wb user=jbcorel password=12345678 target_session_attrs=read-write'
+#configure connection to a remote DB cluster
+ENV CONN_DETAILS='' 
 
 WORKDIR /app
 
@@ -43,12 +44,13 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Switch to the non-privileged user to run the application.
 
-RUN apt-get update && \
-    apt-get install wget postgresql-client --yes && \
-    mkdir -p ~/.postgresql && \
-    wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" \
-        --output-document ~/.postgresql/root.crt && \
-    chmod 0600 ~/.postgresql/root.crt
+#configure connection to a remote DB cluster using a certificate. This example - Yandex managed Postgres cluster
+# RUN apt-get update && \
+#     apt-get install wget postgresql-client --yes && \
+#     mkdir -p ~/.postgresql && \
+#     wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" \
+#         --output-document ~/.postgresql/root.crt && \
+#     chmod 0600 ~/.postgresql/root.crt
 # Copy the source code into the container.
 COPY . .
 
